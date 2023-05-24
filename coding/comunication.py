@@ -11,10 +11,15 @@ print("Serial OK")
 
 try:
     while True:
-        time.sleep(0.1)
-        if ser.in_waiting > 0:
-            line = ser.readline().decode('utf-8').rstrip()
-            print(line)
+        
+        user_input = input("Inroduce angle  ").lower()
+
+        ser.write(user_input.encode('utf-8') )
+
+        # if ser.in_waiting > 0:
+            # line = ser.readline().decode('utf-8').rstrip()
+            # print(line)
+   
 except KeyboardInterrupt:
     ser.close()
     print("Connection closed")
