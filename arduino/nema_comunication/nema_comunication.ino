@@ -1,4 +1,4 @@
-//#include <vector>
+#include <Vector.h>
 
 // X motor (the belt)
 #define STEP_PIN_X 2 //X.STEP
@@ -10,7 +10,7 @@
 #define JS_PIN_X A0 
 #define JS_PIN_Y A1
 
-//std::vector<String> categorys;
+Vector<String> categorys;
 
 double distribuitorAngle = 0;
 int beltSpeed = 10; // Stepper Motor Speed 
@@ -45,7 +45,7 @@ void loop(){
 delay(10);
 }
 
-/*
+
 void automaticControl(){
   moveBelt();
   if(Serial.available() > 0){
@@ -61,13 +61,10 @@ void automaticControl(){
   }
 }
 
-*/
 
-
-/*
 double calculateAngle(String category){
 
-//  int nr_category = categorys.size()+1;
+  int nr_category = categorys.size()+1;
   int destinationAngle = 0;
   for (int i = 0; i < categorys.size(); i++) {
     if(category.equals(categorys[i])){
@@ -94,7 +91,7 @@ double calculateAngle(String category){
     if(distribuitorAngle>0){
       angle= destinationAngle - distribuitorAngle;
     }else{
-      angle = -1*(360-(destinationAngle+abs(distribuitorAngle)))
+      angle = -1*(360-(destinationAngle+abs(distribuitorAngle)));
     }
   }
   rotateDistribuitor(angle);
@@ -108,7 +105,7 @@ void moveBelt(int direction = HIGH){ //HIGH means forward
     digitalWrite(STEP_PIN_X,LOW); 
     delayMicroseconds(beltSpeed);  
 }
-*/
+
 void rotateDistribuitor(double angle){
   distribuitorAngle = distribuitorAngle + angle;
   if (angle < 0){
@@ -190,18 +187,10 @@ void initializeCategorys(){
     int commaIndex = message.indexOf(',');
     while (commaIndex > 0) {
       String category = message.substring(0, commaIndex);
-//      categorys.push_back(category);
+      categorys.push_back(category);
 
       message = message.substring(commaIndex + 1);
       commaIndex = message.indexOf(',');
     }
   }
-
 }
-//
-//double abs(double nr){
-//  if(nr<0){
-//    return -1*nr;
-//  }
-//  return nr;
-//}
