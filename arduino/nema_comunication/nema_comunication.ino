@@ -6,7 +6,7 @@
 // Y motor (the distribuitor)
 #define STEP_PIN_Y 3 // step pin for Y-axis
 #define DIR_PIN_Y 6 // direction pin for Y-axis
-#define ON 0
+int ON = 0;
 #define JS_PIN_X A0 
 #define JS_PIN_Y A1
 
@@ -16,7 +16,7 @@ double distribuitorAngle = 0;
 int beltSpeed = 10; // Stepper Motor Speed 
 
 
-void moveBelt();
+//void moveBelt();
 
 void setup() {
   // Sets the two pins as Outputs
@@ -24,25 +24,49 @@ void setup() {
 
   pinMode(DIR_PIN_Y, OUTPUT);
   pinMode(STEP_PIN_Y, OUTPUT);
-     
+   
   pinMode(STEP_PIN_X,OUTPUT); 
   pinMode(DIR_PIN_X,OUTPUT);
   pinMode(JS_PIN_X , INPUT); 
   pinMode(JS_PIN_Y, INPUT); 
+
+  pinMode(12, OUTPUT);
+  digitalWrite(12, HIGH); 
+  pinMode(13, INPUT);
 }
 
  
 void loop(){  
-
+  checkON();
   if(ON){
-//    automaticControl();
-    
-    
+    automaticControl();
   }else{
     manualControl(); 
   }
 
 delay(10);
+}
+
+
+void checkON(){
+  if(digitalRead(13) == HIGH){
+     Serial.print("high\n");
+    ON = 1;
+  }else{
+    Serial.print("low\n");
+    ON = 0;
+  }
+
+  
+}
+
+
+void moveBelt(int direction = HIGH){ //HIGH means forward
+    digitalWrite(DIR_PIN_X,direction);
+    digitalWrite(STEP_PIN_X,HIGH); 
+    delayMicroseconds(beltSpeed); 
+    digitalWrite(STEP_PIN_X,LOW); 
+    delayMicroseconds(beltSpeed);  
 }
 
 
@@ -98,14 +122,6 @@ double calculateAngle(String category){
   return 0;
 }
 
-void moveBelt(int direction = HIGH){ //HIGH means forward
-    digitalWrite(DIR_PIN_X,direction);
-    digitalWrite(STEP_PIN_X,HIGH); 
-    delayMicroseconds(beltSpeed); 
-    digitalWrite(STEP_PIN_X,LOW); 
-    delayMicroseconds(beltSpeed);  
-}
-
 void rotateDistribuitor(double angle){
   distribuitorAngle = distribuitorAngle + angle;
   if (angle < 0){
@@ -116,7 +132,7 @@ void rotateDistribuitor(double angle){
   }
 
   int steps = (200.0 / 360) * angle;
-  Serial.println(steps);
+//  Serial.println(steps);
 
   for(int i=0; i<steps; i++) {
     digitalWrite(STEP_PIN_Y, HIGH);
@@ -130,7 +146,7 @@ void rotateDistribuitor(double angle){
 
 void manualControl(){
 
-  initializeCategorys();
+//  initializeCategorys();
 
 
   int x_direction = analogRead(JS_PIN_X);
@@ -157,7 +173,7 @@ void manualControl(){
   // distribuitor movment
 
   if ( (y_direction > 490)  &&   (y_direction < 510)){
-    // digitalWrite(STEP_PIN_Y,LOW); 
+    // digitalWrite(STEP_PIN_Y,LOW);  
     delayMicroseconds(beltSpeed);   
   }else if( y_direction > 700  ){
     rotateDistribuitor(10);
@@ -182,8 +198,6 @@ void initializeCategorys(){
 
   if(Serial.available() > 0){
     String message = Serial.readStringUntil('\n');
-
-
     int commaIndex = message.indexOf(',');
     while (commaIndex > 0) {
       String category = message.substring(0, commaIndex);
