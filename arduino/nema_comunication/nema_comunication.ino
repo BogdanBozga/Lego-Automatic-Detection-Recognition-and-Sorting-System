@@ -8,7 +8,7 @@
 #define DIR_PIN_Y 6 // direction pin for Y-axis
 int ON = 0;
 #define JS_PIN_X A0 
-#define JS_PIN_Y A1
+#define JS_PIN_Y A1 
 
 Vector<String> categorys;
 
