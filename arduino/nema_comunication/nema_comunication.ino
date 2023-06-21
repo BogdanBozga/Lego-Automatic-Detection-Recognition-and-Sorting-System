@@ -44,8 +44,21 @@ void loop(){
     manualControl(); 
   }
 
+
+
+
+
 delay(10);
 }
+
+// Define states
+enum State {
+  IDLE,
+  RECEIVING_DATA,
+  PROCESSING_DATA
+};
+
+// Variables
 
 
 void checkON(){
@@ -60,6 +73,8 @@ void checkON(){
   
 }
 
+State currentState = IDLE;
+String receivedData;
 
 void moveBelt(int direction = HIGH){ //HIGH means forward
     digitalWrite(DIR_PIN_X,direction);
@@ -71,23 +86,61 @@ void moveBelt(int direction = HIGH){ //HIGH means forward
 
 // overhault for take into account manual movement
 void automaticControl(){
+
+  switch (currentState) {
+    case IDLE:
+      moveBelt();
+      if (Serial.available() > 0) {
+        receivedData = Serial.readStringUntil('\n');
+        currentState = RECEIVING_DATA;
+      }
+      break;
+      
+    case RECEIVING_DATA:
+      // Continue receiving serial data until a complete message is received
+      if (Serial.available() > 0) {
+        receivedData += Serial.readStringUntil('\n');
+
+        // String message = Serial.readStringUntil('\n');
+      }
+      
+      // Check if the complete message is received
+      if (receivedData.endsWith("END")) {
+        currentState = PROCESSING_DATA;
+      }
+      break;
+      
+    case PROCESSING_DATA:
+      // Process the received data
+       int index = receivedData.indexOf(':');
+          if(index > 0) {
+            String category = receivedData.substring(0, index);
+            String pieceCoordonale = receivedData.substring(index + 1);
+            calculateAngle(category);
+          }else{
+            int index = receivedData.indexOf(',');
+            while (index >= 0) {
+              categorys.push_back(receivedData.substring(0, index));
+              receivedData.remove(0, index + 1);
+            }
+            categorys.push_back(receivedData); // Push the last or only word
+          }
+      // Reset variables
+      receivedData = "";
+      
+      // Transition back to the IDLE state
+      currentState = IDLE;
+      break;
+  }
+
+
+
+
+
+
   moveBelt();
   if(Serial.available() > 0){
-    String message = Serial.readStringUntil('\n');
-
-    int index = message.indexOf(':');
-    if(index > 0) {
-      String category = message.substring(0, index);
-      String pieceCoordonale = message.substring(index + 1);
-      calculateAngle(category);
-    }else{
-      int index = message.indexOf(',');
-      while (index >= 0) {
-        categorys.push_back(message.substring(0, index));
-        message.remove(0, index + 1);
-      }
-      categorys.push_back(message); // Push the last or only word
-    }
+    
   }
 }
 
