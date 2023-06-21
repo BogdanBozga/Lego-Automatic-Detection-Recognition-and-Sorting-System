@@ -50,10 +50,10 @@ delay(10);
 
 void checkON(){
   if(digitalRead(13) == HIGH){
-     Serial.print("high\n");
+//     Serial.print("high\n");
     ON = 1;
   }else{
-    Serial.print("low\n");
+//    Serial.print("low\n");
     ON = 0;
   }
 
@@ -69,19 +69,25 @@ void moveBelt(int direction = HIGH){ //HIGH means forward
     delayMicroseconds(beltSpeed);  
 }
 
-
+// overhault for take into account manual movement
 void automaticControl(){
   moveBelt();
   if(Serial.available() > 0){
     String message = Serial.readStringUntil('\n');
 
-    int commaIndex = message.indexOf(',');
-    if(commaIndex > 0) {
-      String category = message.substring(0, commaIndex);
-      String pieceCoordonale = message.substring(commaIndex + 1);
+    int index = message.indexOf(':');
+    if(index > 0) {
+      String category = message.substring(0, index);
+      String pieceCoordonale = message.substring(index + 1);
       calculateAngle(category);
+    }else{
+      int index = message.indexOf(',');
+      while (index >= 0) {
+        categorys.push_back(message.substring(0, index));
+        message.remove(0, index + 1);
+      }
+      categorys.push_back(message); // Push the last or only word
     }
-
   }
 }
 
