@@ -30,12 +30,12 @@ def generate_name():
 def check_and_send(detections,ser):
     for detection in detections:
         if detection[5] > 500:
-            print(f'Sending {str(detection[0]).strip()} {str(detection[5]).strip()}')
+            
             '''
             send detection[0] , detection[5]
             '''
-            message = f"{detection[0]}:{detection[5]}"
-
+            message = f"{str(detection[0]).strip()}:{str(detection[5]).strip()}:END\n"
+            print(f'Sending --> {message}')
             ser.write(message.encode('utf-8') )
 
 
@@ -49,7 +49,7 @@ def detect(interpreter, image_path,labels,min_conf_threshold,results_path,ser):
     width = input_details[0]['shape'][2]
 
     float_input = (input_details[0]['dtype'] == np.float32)
-    print(float_input)
+    # print(float_input)
     input_mean = 127.5
     input_std = 127.5
 
@@ -197,18 +197,19 @@ def main():
         labels = file.readlines()
 
 
-        message = "labels,"
+        message = ""
         for label in labels:
-            message = message + label + ','
+            message = message + label.strip() + ','
+        message+='END\n'
+        
+        print("Sending labels -->",message)
         ser.write(message.encode('utf-8') )
-
-
     interpreter = tflite.Interpreter(model_path=my_model_path)
     interpreter.allocate_tensors()
     try:
         while True:
             try:
-                print("Taking photo...")
+                # print("Taking photo...")
                 os.system(f"raspistill -o {image_path} -w 640 -h 640 -t 600 -rot 90")
                 
             except Exception as e:
@@ -216,9 +217,9 @@ def main():
                 print(e)
                 sys.exit()
             try:
-                print("Start detection...")
+                # print("Start detection...")
                 detections = detect(interpreter, image_path,labels,min_conf_threshold,results_path,ser)
-                print("Detestion done...")
+                # print("Detestion done...")
                 check_and_send(detections,ser)
             except Exception as  e:
                 print("Error with AI model")
