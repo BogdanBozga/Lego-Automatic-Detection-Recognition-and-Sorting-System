@@ -9,16 +9,7 @@ import serial
 import time
 
 
-# slope_lego
-# L_beam_lego
-# pin_lego
-# plates_long_lego
-# step_lego
-# wheel_lego
-
-
-
-
+# s
 ser = serial.Serial('/dev/ttyACM0',115200,timeout=1.0)
 time.sleep(3)
 

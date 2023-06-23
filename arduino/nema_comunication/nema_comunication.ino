@@ -1,6 +1,4 @@
 #include <LinkedList.h>
-#include <AccelStepper.h>
-
 // X motor (the belt)
  #define STEP_PIN_X 2 //X.STEP
  #define DIR_PIN_X 5 // X.DIR
@@ -8,13 +6,9 @@
  #define STEP_PIN_Y 3 // step pin for Y-axis
  #define DIR_PIN_Y 6 // direction pin for Y-axis
 
-//
-//#define STEP_PIN_X 3 //X.STEP
-//#define DIR_PIN_X 6 // X.DIR
-//// Y motor (the distribuitor)
-//#define STEP_PIN_Y 2 // step pin for Y-axis
-//#define DIR_PIN_Y 5 // direction pin for Y-axis
 
+#define JS_PIN_X A0 
+#define JS_PIN_Y A1 
 enum State {
   IDLE,
   RECEIVING_DATA,
@@ -23,28 +17,26 @@ enum State {
 
 struct piece_coordonate
 {
-  String label;
-  double distance;
+  String *label;
+  int *distance;
 };
 
+int box_edge_distance = 150; // milimeter
+int motorSteps = 0;
+LinkedList<String> categorys=LinkedList<String>();
+// LinkedList<piece_coordonate*> pieces = LinkedList<piece_coordonate*>();
+LinkedList<String> pieces_labels = LinkedList<String>();
+LinkedList<int> pieces_distance = LinkedList<int>();
 
 int ON = 0;
-#define JS_PIN_X A0 
-#define JS_PIN_Y A1 
-
-#define motorInterfaceType 1
-
-LinkedList<String> categorys=LinkedList<String>();
-
-
 
 double distribuitorAngle = 0;
 int beltSpeed = 10; // Stepper Motor Speed 
-AccelStepper stepper = AccelStepper(AccelStepper::DRIVER, STEP_PIN_Y, DIR_PIN_Y);
+int speed_delay = 10;
+
 
 
 void setup() {
-  // Sets the two pins as Outputs
   Serial.begin(115200);
 
   pinMode(DIR_PIN_Y, OUTPUT);
@@ -58,11 +50,6 @@ void setup() {
   pinMode(12, OUTPUT);
   digitalWrite(12, HIGH); 
   pinMode(13, INPUT);
-//
-//
-//  stepper.setMaxSpeed(600.0);
-//  stepper.setAcceleration(500.0);
-
 }
 
  
@@ -89,19 +76,62 @@ void checkON(){
 State currentState = IDLE;
 String receivedData;
 
-void moveBelt(int direction = HIGH){ //HIGH means forward
+void moveBelt(int direction = HIGH){ //HIGH means forward , //each call represents a step
     digitalWrite(DIR_PIN_X,direction);
     digitalWrite(STEP_PIN_X,HIGH); 
     delayMicroseconds(beltSpeed); 
     digitalWrite(STEP_PIN_X,LOW); 
     delayMicroseconds(beltSpeed);  
+
+    if(direction == HIGH){
+      motorSteps += 1;
+    }else{
+      motorSteps -= 1;
+    }
+
 }
+
+void magic(){
+  if(motorSteps >= 50){ //50 steps = 10 milimeters
+    motorSteps -= 50;
+    if(pieces_distance.size() > 0){
+      for(int i=0; i<pieces_distance.size();i++){
+//        piece_coordonate *piece = pieces.get(i); // get the piece
+        // pieces.remove(i); // remove the piece from the list
+        // distance = pieces_distance.get(i) - 10;
+        // piece_distance.remove()
+        pieces_distance.set(i,pieces_distance.get(i) - 10); // modify the piece
+        Serial.print(pieces_distance.get(i));
+        Serial.print("--");
+        // pieces.remove(i);
+        // pieces.add(i, piece); // insert the piece back into the list
+        Serial.print(pieces_distance.size());
+        Serial.print(" || ");
+      }
+      Serial.print("   --->");
+      Serial.print(pieces_distance.get(0));
+      Serial.println(" <---");
+
+      if(pieces_distance.get(0) <= 10){
+        calculateAngle(pieces_labels.get(0));
+        if(pieces_distance.get(0) <= 0){
+          pieces_distance.shift();
+          pieces_labels.shift();
+
+          //delete piece.distance ....
+        }
+      }
+    }
+  }
+}
+
 
 // overhault for take into account manual movement
 void automaticControl(){
   switch (currentState) {
     case IDLE:
-     moveBelt();
+      moveBelt();
+      magic();
       if (Serial.available() > 0) {
         receivedData = Serial.readStringUntil('\n');
         currentState = RECEIVING_DATA;
@@ -124,7 +154,9 @@ void automaticControl(){
             receivedData.remove(0, index1 + 1);
             index1 = receivedData.indexOf(':');
             String pieceCoordonale = receivedData.substring(0,index1);
-            calculateAngle(category);
+
+            pieces_labels.add(category);
+            pieces_distance.add(box_edge_distance+0);//some pixel magic
           }
           int index2 = receivedData.indexOf(',');
           if(index2 > 0){
@@ -189,53 +221,18 @@ void moveDis(int direction = HIGH){ //HIGH means forward
 
 void rotateDistribuitor(double angle){
   distribuitorAngle = distribuitorAngle + angle;
-//  Serial.print("Angle ");
-//  Serial.print(angle);
-//Serial.print(" and steps ");
   int steps = (200.0 / 360) * abs(angle);
   if (angle < 0){
-    // digitalWrite(DIR_PIN_Y, LOW); 
     for(int i = 0;i<steps;i++){
       moveDis(LOW);
-      delay(10);
+      delay(speed_delay);
     }
   }else{
       for(int i = 0;i<steps;i++){
-      moveDis(HIGH);
-      delay(10);
-    }
-
+        moveDis(HIGH);
+        delay(speed_delay);
+      }
   }
-
-  // for(int i = 0;i<steps;i++){
-  //   moveDis();
-  //   delay(10);
-  // }
-  // Serial.println("--");
-//  Serial.println(steps);
-//   stepper.move(steps);
-//  // // Run to the target position at the maximum speed set in setup()
-//  stepper.runToPosition();
-/*
-  
-  if (angle < 0){
-    angle = angle*(-1);
-    digitalWrite(DIR_PIN_Y, LOW); 
-  }else{
-    digitalWrite(DIR_PIN_Y, HIGH); 
-  }
-
-  int steps = (200.0 / 360) * angle;
-    Serial.println(steps);
-//  Serial.println(steps);
-
-  for(int i=0; i<steps; i++) {
-    digitalWrite(STEP_PIN_Y, HIGH);
-    delayMicroseconds(500);
-    digitalWrite(STEP_PIN_Y, LOW);
-    delayMicroseconds(500);
-  }
-  */
 }
 
 

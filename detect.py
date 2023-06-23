@@ -221,6 +221,10 @@ def main():
                 detections = detect(interpreter, image_path,labels,min_conf_threshold,results_path,ser)
                 # print("Detestion done...")
                 check_and_send(detections,ser)
+
+                if ser.in_waiting > 0:
+                    line = ser.readline().decode('utf-8').rstrip()
+                    print(line)
             except Exception as  e:
                 print("Error with AI model")
                 print(e)
